@@ -26,6 +26,7 @@ class TinyPng {
     extension: [".jpg", ".png", "jpeg"],
     max: 5200000, // 5MB == 5242848.754299136
     min: 100000, // 100KB
+    asyncCount: 5,
   };
 
   // 成功处理计数
@@ -60,7 +61,7 @@ class TinyPng {
   /**
    * 执行压缩
    */
-  compress() {
+  async compress() {
     if (!this.config.files.length) {
       return;
     }
@@ -70,17 +71,34 @@ class TinyPng {
       this.config.files.forEach((img) => {
         asyncAll.push(this.fileUpload(img));
       });
-      Promise.all(asyncAll)
-        .then(() => {
-          Tlog.log(
-            `处理完毕: 成功: ${this.successCount}张, 成功率${
-              this.successCount / this.config.files.length
-            }`
-          );
-        })
-        .catch((error) => {
+      // Promise.all(asyncAll)
+      //   .then(() => {
+      //     Tlog.log(
+      //       `处理完毕: 成功: ${this.successCount}张, 成功率${
+      //         this.successCount / this.config.files.length
+      //       }`
+      //     );
+      //   })
+      //   .catch((error) => {
+      //     Tlog.error(error);
+      //   });
+      while (asyncAll.length) {
+        const __p = [];
+        for (let i = 0; i < this.config.asyncCount; i++) {
+          const target = asyncAll.shift();
+          if (target) {
+            __p.push(target);
+          }
+        }
+        await Promise.all(__p).catch((error) => {
           Tlog.error(error);
         });
+      }
+      Tlog.log(
+        `处理完毕: 成功: ${this.successCount}张, 成功率${
+          (this.successCount / this.config.files.length) * 100
+        }%`
+      );
     }
   }
 
@@ -143,7 +161,7 @@ class TinyPng {
    * @error  {"error": "Bad request", "message" : "Request is invalid"}
    */
   fileUpload(imgPath) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       let req = https.request(this.getAjaxOptions(), (res) => {
         res.on("data", async (buf) => {
           let obj = JSON.parse(buf.toString());
@@ -156,17 +174,17 @@ class TinyPng {
       });
       req.write(fs.readFileSync(imgPath), "binary");
       req.on("error", (e) => {
-        Tlog.log(`请求错误! \n 当前文件：${imgPath} \n, ${e}`);
+        reject(`请求错误! \n 当前文件：${imgPath} \n, ${e}`);
       });
       req.end();
     }).catch((error) => {
-      Tlog.log(error);
+      Tlog.error(error);
     });
   }
 
   // 该方法被循环调用,请求图片数据
   fileUpdate(entryImgPath, obj) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       let options = new URL(obj.output.url);
       let req = https.request(options, (res) => {
         let body = "";
@@ -193,11 +211,11 @@ class TinyPng {
         });
       });
       req.on("error", (e) => {
-        Tlog.log(e);
+        reject(e);
       });
       req.end();
     }).catch((error) => {
-      Tlog.log(error);
+      Tlog.error(error);
     });
   }
 }

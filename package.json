@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rollup --config",
-    "pub": "npm run build && npm publish"
+    "pub": "npm version patch && git push && npm publish"
   },
   "author": "",
   "license": "ISC",
