@@ -25,7 +25,7 @@ class TinyPng {
     deepLoop: false,
     extension: [".jpg", ".png", "jpeg"],
     max: 5200000, // 5MB == 5242848.754299136
-    min: 100000, // 100KB
+    min: 20000, // 10KB
     asyncCount: 5,
   };
 
@@ -162,21 +162,30 @@ class TinyPng {
    */
   fileUpload(imgPath) {
     return new Promise((resolve, reject) => {
-      let req = https.request(this.getAjaxOptions(), (res) => {
-        res.on("data", async (buf) => {
-          let obj = JSON.parse(buf.toString());
-          if (obj.error) {
-            Tlog.log(`压缩失败！\n 当前文件：${imgPath} \n ${obj.message}`);
+      let retryCount = 0;
+      const process = () => {
+        let req = https.request(this.getAjaxOptions(), (res) => {
+          res.on("data", async (buf) => {
+            let obj = JSON.parse(buf.toString());
+            if (obj.error) {
+              Tlog.log(`压缩失败！\n 当前文件：${imgPath} \n ${obj.message}`);
+            } else {
+              resolve(await this.fileUpdate(imgPath, obj));
+            }
+          });
+        });
+        req.write(fs.readFileSync(imgPath), "binary");
+        req.on("error", (e) => {
+          if (retryCount < 3) {
+            retryCount++;
+            process();
           } else {
-            resolve(await this.fileUpdate(imgPath, obj));
+            reject(`请求错误! \n 当前文件：${imgPath} \n, ${e}`);
           }
         });
-      });
-      req.write(fs.readFileSync(imgPath), "binary");
-      req.on("error", (e) => {
-        reject(`请求错误! \n 当前文件：${imgPath} \n, ${e}`);
-      });
-      req.end();
+        req.end();
+      };
+      process();
     }).catch((error) => {
       Tlog.error(error);
     });
@@ -186,34 +195,43 @@ class TinyPng {
   fileUpdate(entryImgPath, obj) {
     return new Promise((resolve, reject) => {
       let options = new URL(obj.output.url);
-      let req = https.request(options, (res) => {
-        let body = "";
-        res.setEncoding("binary");
-        res.on("data", (data) => (body += data));
-        res.on("end", () => {
-          fs.writeFile(entryImgPath, body, "binary", (err) => {
-            if (err) {
-              Tlog.log(err);
-            } else {
-              this.successCount++;
-              let message = `压缩成功 : 优化比例: ${(
-                (1 - obj.output.ratio) *
-                100
-              ).toFixed(2)}% ，原始大小: ${(obj.input.size / 1024).toFixed(
-                2
-              )}KB ，压缩大小: ${(obj.output.size / 1024).toFixed(
-                2
-              )}KB ，文件：${entryImgPath}`;
-              Tlog.success(message);
-              resolve(message);
-            }
+      let retryCount = 0;
+      const process = () => {
+        let req = https.request(options, (res) => {
+          let body = "";
+          res.setEncoding("binary");
+          res.on("data", (data) => (body += data));
+          res.on("end", () => {
+            fs.writeFile(entryImgPath, body, "binary", (err) => {
+              if (err) {
+                Tlog.log(err);
+              } else {
+                this.successCount++;
+                let message = `压缩成功 : 优化比例: ${(
+                  (1 - obj.output.ratio) *
+                  100
+                ).toFixed(2)}% ，原始大小: ${(obj.input.size / 1024).toFixed(
+                  2
+                )}KB ，压缩大小: ${(obj.output.size / 1024).toFixed(
+                  2
+                )}KB ，文件：${entryImgPath}`;
+                Tlog.success(message);
+                resolve(message);
+              }
+            });
           });
         });
-      });
-      req.on("error", (e) => {
-        reject(e);
-      });
-      req.end();
+        req.on("error", (e) => {
+          if (retryCount < 3) {
+            retryCount++;
+            process();
+          } else {
+            reject(`下载失败，当前文件${entryImgPath}, ${e}`);
+          }
+        });
+        req.end();
+      };
+      process();
     }).catch((error) => {
       Tlog.error(error);
     });
