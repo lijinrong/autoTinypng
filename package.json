@@ -1,6 +1,6 @@
 {
   "name": "autotinypng",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "./lib/index.js",
   "scripts": {
@@ -15,6 +15,10 @@
   },
   "bin": {
     "autotiny": "./lib/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lijinrong/autoTinypng"
   },
   "devDependencies": {
     "rollup-plugin-babel": "^4.4.0",

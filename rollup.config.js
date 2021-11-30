@@ -5,7 +5,7 @@ import commonjs from "@rollup/plugin-commonjs";
 export default {
   input: "src/entry.js",
   output: {
-    file: "lib/index.js",
+    file: "lib/bundle.js",
     format: "cjs",
   },
   plugins: [
