@@ -1,0 +1,27 @@
+{
+  "name": "autotinypng",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup --config"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "bin": "./lib/index.js",
+  "devDependencies": {
+    "chalk": "^4.1.2",
+    "rollup-plugin-babel": "^4.4.0",
+    "@babel/core": "^7.16.0",
+    "@babel/plugin-external-helpers": "^7.16.0",
+    "@babel/plugin-transform-runtime": "^7.16.4",
+    "@babel/preset-env": "^7.16.4",
+    "@babel/runtime": "^7.16.3",
+    "@babel/runtime-corejs3": "^7.16.3",
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "rollup": "^2.60.1",
+    "rollup-plugin-node-resolve": "^5.2.0"
+  }
+}
