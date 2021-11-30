@@ -3,10 +3,12 @@
  */
 import TinyPng from "./tinyPng";
 
-function getEntryPath() {
-  let i = process.argv.findIndex((i) => i === "-p");
-  if (process.argv[i + 1]) {
-    return process.argv[i + 1];
-  }
-}
-new TinyPng(getEntryPath(), true).compress();
+// function getEntryPath() {
+//   let i = process.argv.findIndex((i) => i === "-p");
+//   if (process.argv[i + 1]) {
+//     return process.argv[i + 1];
+//   }
+// }
+// new TinyPng(getEntryPath(), true).compress();
+
+export default TinyPng

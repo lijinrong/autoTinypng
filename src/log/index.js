@@ -2,10 +2,13 @@ import chalk from "chalk/source/index";
 
 // 定义log,支持输出日志到文件
 class Log {
+  progress = null
   /**
    * 初始化打印配置
    */
-  constructor() {}
+  constructor(progress) {
+    this.progress = progress
+  }
 
   /**
    * log级别
@@ -13,13 +16,13 @@ class Log {
    */
   log(message) {
     if (message) {
-      console.log(message);
+      this.progress.report(message);
     }
   }
 
   success(message) {
     if (message) {
-      console.log(chalk.green(message));
+      this.progress.report(message);
     }
   }
 

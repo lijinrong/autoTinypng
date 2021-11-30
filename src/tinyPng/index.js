@@ -28,7 +28,8 @@ class TinyPng {
     min: 20000, // 10KB
     asyncCount: 5,
   };
-
+  stop = false;
+  progressUnit = 0;
   // 成功处理计数
   successCount = 0;
   // 失败处理计数
@@ -38,8 +39,10 @@ class TinyPng {
    * TinyPng 构造器
    * @param {*} entry 入口文件
    * @param {*} deep 是否递归
+   * @param {*} progress vscode progress 对象
    */
-  constructor(entry, deep) {
+  constructor(entry, deep, progress) {
+    Tlog.progress = progress
     console.log(USER_AGENT[Math.floor(Math.random() * 10)]);
     if (entry != undefined) {
       this.config.entryFolder = entry;
@@ -56,6 +59,7 @@ class TinyPng {
       }
     });
     Tlog.log(`等待处理文件的数量：${this.config.files.length}`);
+    this.progressUnit = 100 / this.config.files.length;
   }
 
   /**
@@ -82,7 +86,7 @@ class TinyPng {
       //   .catch((error) => {
       //     Tlog.error(error);
       //   });
-      while (asyncAll.length) {
+      while (asyncAll.length && !this.stop) {
         const __p = [];
         for (let i = 0; i < this.config.asyncCount; i++) {
           const target = asyncAll.shift();
@@ -94,11 +98,6 @@ class TinyPng {
           Tlog.error(error);
         });
       }
-      Tlog.log(
-        `处理完毕: 成功: ${this.successCount}张, 成功率${
-          (this.successCount / this.config.files.length) * 100
-        }%`
-      );
     }
   }
 
@@ -168,7 +167,7 @@ class TinyPng {
           res.on("data", async (buf) => {
             let obj = JSON.parse(buf.toString());
             if (obj.error) {
-              Tlog.log(`压缩失败！\n 当前文件：${imgPath} \n ${obj.message}`);
+              reject(`压缩失败！\n 当前文件：${imgPath} \n ${obj.message}`);
             } else {
               resolve(await this.fileUpdate(imgPath, obj));
             }
@@ -204,7 +203,7 @@ class TinyPng {
           res.on("end", () => {
             fs.writeFile(entryImgPath, body, "binary", (err) => {
               if (err) {
-                Tlog.log(err);
+                reject(err);
               } else {
                 this.successCount++;
                 let message = `压缩成功 : 优化比例: ${(
@@ -215,7 +214,10 @@ class TinyPng {
                 )}KB ，压缩大小: ${(obj.output.size / 1024).toFixed(
                   2
                 )}KB ，文件：${entryImgPath}`;
-                Tlog.success(message);
+                Tlog.success({
+                  increment: this.progressUnit,
+                  message: `处理进度：${this.successCount}/${this.config.files.length}`,
+                });
                 resolve(message);
               }
             });
