@@ -2,13 +2,12 @@ import chalk from "chalk/source/index";
 
 // 定义log,支持输出日志到文件
 class Log {
-  progress = null
+  progress = null;
+  rcsoutput = null;
   /**
    * 初始化打印配置
    */
-  constructor(progress) {
-    this.progress = progress
-  }
+  constructor() {}
 
   /**
    * log级别
@@ -16,7 +15,7 @@ class Log {
    */
   log(message) {
     if (message) {
-      this.progress.report(message);
+      this.rcsoutput.appendLine(message);
     }
   }
 
@@ -32,7 +31,7 @@ class Log {
    */
   error(message) {
     if (message) {
-      console.error(message);
+      this.rcsoutput.appendLine(message);
     }
   }
 }

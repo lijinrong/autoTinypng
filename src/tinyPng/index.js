@@ -41,9 +41,10 @@ class TinyPng {
    * @param {*} deep 是否递归
    * @param {*} progress vscode progress 对象
    */
-  constructor(entry, deep, progress) {
-    Tlog.progress = progress
-    console.log(USER_AGENT[Math.floor(Math.random() * 10)]);
+  constructor(entry, deep, progress, rcsoutput) {
+    Tlog.progress = progress;
+    Tlog.rcsoutput = rcsoutput;
+
     if (entry != undefined) {
       this.config.entryFolder = entry;
     }
@@ -214,6 +215,7 @@ class TinyPng {
                 )}KB ，压缩大小: ${(obj.output.size / 1024).toFixed(
                   2
                 )}KB ，文件：${entryImgPath}`;
+                Tlog.log(message);
                 Tlog.success({
                   increment: this.progressUnit,
                   message: `处理进度：${this.successCount}/${this.config.files.length}`,
